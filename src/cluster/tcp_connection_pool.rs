@@ -11,6 +11,7 @@ use crate::error;
 use crate::frame::parser::parse_frame;
 use crate::frame::{Frame, IntoBytes, Opcode};
 use crate::transport::{CDRSTransport, TransportTcp};
+use crate::sharding::ShardingInfo;
 
 /// Shortcut for `r2d2::Pool` type of TCP-based CDRS connections.
 pub type TcpConnectionPool<A> = Pool<TcpConnectionsManager<A>>;
@@ -82,6 +83,21 @@ pub fn startup<'b, T: CDRSTransport + 'static, A: Authenticator + 'static + Size
     transport.borrow_mut().write(startup_frame.as_slice())?;
 
     let start_response = parse_frame(transport, compression)?;
+
+    let options_frame = Frame::new_req_options().into_cbytes();
+    transport.borrow_mut().write(options_frame.as_slice())?;
+    let options_response = parse_frame(transport, compression)?;
+
+    if options_response.opcode == Opcode::Supported {
+        let body = options_response.get_body()?;
+        let options = body.into_supported();
+        let options = match options {
+            Some(opt) => {
+                println!("Sharding options: {:?}", ShardingInfo::parse(&opt.data));
+            },
+	        _ => (),
+        };
+    }
 
     if start_response.opcode == Opcode::Ready {
         return Ok(());

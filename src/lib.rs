@@ -27,6 +27,7 @@ pub mod consistency;
 pub mod error;
 pub mod events;
 pub mod transport;
+pub mod sharding;
 
 pub type Error = error::Error;
 pub type Result<T> = error::Result<T>;

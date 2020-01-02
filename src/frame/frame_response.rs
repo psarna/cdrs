@@ -120,6 +120,15 @@ impl ResponseBody {
         }
     }
 
+    /// It unwraps body and returns BodyResSupported.
+    /// If frame body is not of type `BodyResSupported` this method returns `None`.
+    pub fn into_supported(self) -> Option<BodyResSupported> {
+        match self {
+            ResponseBody::Supported(supported) => Some(supported),
+            _ => None,
+        }
+    }
+
     pub fn get_authenticator<'a>(&'a self) -> Option<&'a str> {
         match *self {
             ResponseBody::Authenticate(ref auth) => Some(auth.data.as_str()),
